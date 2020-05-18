@@ -214,16 +214,13 @@
     }
 
     function handleClientLoad() {
-      //console.log("fn:handleClientLoad");
+      console.log("fn:handleClientLoad");
       gapi.client.setApiKey(apiKey);
       window.setTimeout(checkAuth, 1);
-      gapi.load('auth2', function () {
-        gapi.auth2.init();
-      });
     }
 
     function checkAuth() {
-      //console.log("fn:checkAuth");
+      console.log("fn:checkAuth");
       gapi.auth.authorize({
         client_id: clientId,
         scope: scopes,
@@ -232,7 +229,7 @@
     }
 
     function handleAuthClick() {
-      //console.log("fn:handleAuthClick");
+      console.log("fn:handleAuthClick");
       gapi.auth.authorize({
         client_id: clientId,
         scope: scopes,
@@ -242,7 +239,7 @@
     }
 
     function handleAuthResult(authResult) {
-      //console.log("fn:handleAuthResult");
+      console.log("fn:handleAuthResult");
 
       if (authResult && !authResult.error) {
         loadGmailApi();
@@ -253,12 +250,13 @@
         document.getElementById("authorize-button").setAttribute("class", "btn btn-primary hidden");
         document.getElementById("authorize-button").setAttribute("style", "display:none");
       } else {
+        console.log(authResult);
         document.getElementById("authorize-button").setAttribute("class", "btn btn-primary");
       }
     }
 
     function loadGmailApi() {
-      //console.log("fn:loadGmailApi");
+      console.log("fn:loadGmailApi");
       gapi.client.load('gmail', 'v1', displayInbox);
     }
 
@@ -267,7 +265,7 @@
     }
 
     function displayInbox() {
-      //console.log("fn:displayInbox");
+      console.log("fn:displayInbox");
       var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -289,7 +287,7 @@
     }
 
     function displaySearch() {
-      //console.log("fn:displaySearch");
+      console.log("fn:displaySearch");
       var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
