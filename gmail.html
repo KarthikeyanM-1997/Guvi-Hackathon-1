@@ -19,8 +19,8 @@
 </head>
 
 <body id='mailBody'>
-  <div class="container">
-    <h1>Gmail API demo</h1>
+  <div class="container text-center">
+    <h1>Minimalistic GMail App</h1>
 
     <button id="authorize-button" class="btn btn-primary hidden" onclick='handleAuthClick();'>Authorize</button>
 
@@ -116,7 +116,7 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 
   <script type="text/javascript">
-    var clientId = '76132087808-3npjhe25eh3a4vp3a2fef3ih7d8mt75t.apps.googleusercontent.com';
+    var clientId = '76132087808-qg6rjp4saans1ag84cvbrott9395n4oe.apps.googleusercontent.com';
     var apiKey = 'AIzaSyALlpwy-5O9vE_zcAoKvPCArV03I-qOTl8';
     var scopes = 'https://www.googleapis.com/auth/gmail.readonly' + ' ' + 'https://www.googleapis.com/auth/gmail.send';
 
@@ -177,7 +177,7 @@
       document.getElementById("compose-to").value = "";
       document.getElementById("compose-subject").value = "";
       document.getElementById("compose-message").value = "";
-
+      replyMessageID = 0;
       document.getElementById("send-button").setAttribute("class", "btn btn-primary");
       document.getElementById("compose-subject").value = "";
       document.getElementById("compose-to").disabled = false;
@@ -188,7 +188,7 @@
       document.getElementById("compose-to").value = "";
       document.getElementById("compose-subject").value = "";
       document.getElementById("compose-message").value = "";
-
+      replyMessageID = 0;
       document.getElementById("send-button").setAttribute("class", "btn btn-primary");
       document.getElementById("compose-subject").value = "";
       document.getElementById("compose-to").disabled = false;
