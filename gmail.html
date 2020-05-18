@@ -1,0 +1,521 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Gmail API demo</title>
+  <meta charset="UTF-8">
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+  <style>
+    iframe {
+      width: 100%;
+      border: 0;
+      min-height: 80%;
+      height: 600px;
+      display: flex;
+    }
+  </style>
+</head>
+
+<body id='mailBody'>
+  <div class="container">
+    <h1>Gmail API demo</h1>
+
+    <button id="authorize-button" class="btn btn-primary hidden" onclick='handleAuthClick();'>Authorize</button>
+
+  </div>
+
+  <div class='container' id='navBar' style='display:none'>
+    <div class='row'>
+      <div class='col-lg-4'>
+        <button id="authorize-button" class="btn btn-primary hidden" onclick='showInbox();'>Inbox</button> <button
+          id='refreshInbox' onclick='refreshInbox()' class='btn'>Refresh</button>
+      </div>
+      <div class='col-lg-4'>
+        <button id="authorize-button" class="btn btn-primary hidden" onclick='showSearch();'>Search</button>
+      </div>
+      <div class='col-lg-4'>
+        <button id="authorize-button" class="btn btn-primary hidden" onclick='showCompose();'>Compose</button>
+      </div>
+    </div>
+    <hr>
+  </div>
+
+
+
+  <div class='container' id='inboxContainer' style='display:none'>
+    <div class='row'>
+      <div class='col-lg-3'>
+        Sender
+      </div>
+      <div class='col-lg-6'>
+        Subject
+      </div>
+      <div class='col-lg-3'>
+        Date
+      </div>
+    </div>
+    <hr>
+    <div id='inboxMessagesDiv'></div>
+
+  </div>
+
+  <div class='container' id='searchContainer' style='display:none'>
+    <div id='searchOuter'>
+      <input type='text' id='search-field' class='form-control' style='width:80%;display:inline'
+        placeholder="Search your Inbox" /><button id='search-button' class='btn btn-primary'
+        style="display:inline;float:right;margin-top:-5px" onclick='displaySearch();'>Search</button>
+      <hr>
+      <br>
+    </div>
+
+    <div class='row'>
+      <div class='col-lg-3'>
+        Sender
+      </div>
+      <div class='col-lg-6'>
+        Subject
+      </div>
+      <div class='col-lg-3'>
+        Date
+      </div>
+    </div>
+    <hr>
+    <div id='searchResultsDiv'></div>
+
+
+
+  </div>
+
+  <div class='container' id='composeContainer' style='display:none'>
+    Compose
+    <br>
+    <form onsubmit="return sendEmail();">
+      <div class="modal-body">
+        <div class="form-group">
+          <input type="email" class="form-control" id="compose-to" placeholder="To" required />
+        </div>
+
+        <div class="form-group">
+          <input type="text" class="form-control" id="compose-subject" placeholder="Subject" required />
+        </div>
+
+        <div class="form-group">
+          <textarea class="form-control" id="compose-message" placeholder="Message" rows="10" required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" onclick='clearReply();' data-dismiss="modal">Clear</button>
+        <button type="submit" id="send-button" class="btn btn-primary">Send</button>
+      </div>
+    </form>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript">
+    var clientId = '76132087808-eqclki2f6kvchfnlt1hbjdghs1sshb2r.apps.googleusercontent.com';
+    var apiKey = 'AIzaSyALlpwy-5O9vE_zcAoKvPCArV03I-qOTl8';
+    var scopes = 'https://www.googleapis.com/auth/gmail.readonly' + ' ' + 'https://www.googleapis.com/auth/gmail.send';
+
+    function showInbox() {
+      if (document.getElementById("inboxContainer").style.display === "none") {
+        document.getElementById("inboxContainer").style.display = "block";
+        document.getElementById("searchContainer").style.display = "none";
+        document.getElementById("composeContainer").style.display = "none";
+      }
+    }
+
+    function showSearch() {
+      if (document.getElementById("searchContainer").style.display === "none") {
+        document.getElementById("searchContainer").style.display = "block"
+        document.getElementById("inboxContainer").style.display = "none";
+        document.getElementById("composeContainer").style.display = "none";
+      }
+    }
+
+    function showCompose() {
+      if (document.getElementById("composeContainer").style.display === "none") {
+        document.getElementById("composeContainer").style.display = "block"
+        document.getElementById("searchContainer").style.display = "none";
+        document.getElementById("inboxContainer").style.display = "none";
+      }
+    }
+
+    function sendEmail() {
+      document.getElementById("send-button").setAttribute("class", "btn btn-primary disabled");
+      if (replyMessageID !== 0) {
+        sendMessage(
+          {
+            'To': document.getElementById("compose-to").value,
+            'Subject': document.getElementById("compose-subject").value,
+            'In-Reply-To': replyMessageID
+          },
+          document.getElementById("compose-message").value,
+          composeTidy
+        );
+        replyMessageID = 0;
+      }
+      else {
+        sendMessage(
+          {
+            'To': document.getElementById("compose-to").value,
+            'Subject': document.getElementById("compose-subject").value
+          },
+          document.getElementById("compose-message").value,
+          composeTidy
+        );
+      }
+
+      return false;
+    }
+
+
+    function composeTidy() {
+      document.getElementById("compose-to").value = "";
+      document.getElementById("compose-subject").value = "";
+      document.getElementById("compose-message").value = "";
+
+      document.getElementById("send-button").setAttribute("class", "btn btn-primary");
+      document.getElementById("compose-subject").value = "";
+      document.getElementById("compose-to").disabled = false;
+      document.getElementById("compose-subject").disabled = false;
+    }
+
+    function clearReply() {
+      document.getElementById("compose-to").value = "";
+      document.getElementById("compose-subject").value = "";
+      document.getElementById("compose-message").value = "";
+
+      document.getElementById("send-button").setAttribute("class", "btn btn-primary");
+      document.getElementById("compose-subject").value = "";
+      document.getElementById("compose-to").disabled = false;
+      document.getElementById("compose-subject").disabled = false;
+    }
+
+    function sendMessage(headers_obj, message, callback) {
+      var email = '';
+
+      for (var header in headers_obj)
+        email += header += ": " + headers_obj[header] + "\r\n";
+
+      email += "\r\n" + message;
+
+      var sendRequest = gapi.client.gmail.users.messages.send({
+        'userId': 'me',
+        'resource': {
+          'raw': window.btoa(email).replace(/\+/g, '-').replace(/\//g, '_')
+        }
+      });
+
+      return sendRequest.execute(callback);
+    }
+
+    function handleClientLoad() {
+      //console.log("fn:handleClientLoad");
+      gapi.client.setApiKey(apiKey);
+      window.setTimeout(checkAuth, 1);
+      gapi.load('auth2', function () {
+        gapi.auth2.init();
+      });
+    }
+
+    function checkAuth() {
+      //console.log("fn:checkAuth");
+      gapi.auth.authorize({
+        client_id: clientId,
+        scope: scopes,
+        immediate: true
+      }, handleAuthResult);
+    }
+
+    function handleAuthClick() {
+      //console.log("fn:handleAuthClick");
+      gapi.auth.authorize({
+        client_id: clientId,
+        scope: scopes,
+        immediate: false
+      }, handleAuthResult);
+      return false;
+    }
+
+    function handleAuthResult(authResult) {
+      //console.log("fn:handleAuthResult");
+
+      if (authResult && !authResult.error) {
+        loadGmailApi();
+        showInbox();
+
+        document.getElementById("navBar").setAttribute("style", "display:block");
+
+        document.getElementById("authorize-button").setAttribute("class", "btn btn-primary hidden");
+        document.getElementById("authorize-button").setAttribute("style", "display:none");
+      } else {
+        document.getElementById("authorize-button").setAttribute("class", "btn btn-primary");
+      }
+    }
+
+    function loadGmailApi() {
+      //console.log("fn:loadGmailApi");
+      gapi.client.load('gmail', 'v1', displayInbox);
+    }
+
+    function refreshInbox() {
+      displayInbox();
+    }
+
+    function displayInbox() {
+      //console.log("fn:displayInbox");
+      var request = gapi.client.gmail.users.messages.list({
+        'userId': 'me',
+        'labelIds': 'INBOX',
+        'maxResults': 100
+      });
+
+      request.execute(function (response) {
+        document.getElementById("inboxMessagesDiv").innerHTML = "";
+        for (let i = 0; i < response.messages.length; i++) {
+          var messageRequest = gapi.client.gmail.users.messages.get({
+            'userId': 'me',
+            'id': response.messages[i].id
+          });
+
+          messageRequest.execute(appendMessageRow);
+        }
+
+      });
+    }
+
+    function displaySearch() {
+      //console.log("fn:displaySearch");
+      var request = gapi.client.gmail.users.messages.list({
+        'userId': 'me',
+        'labelIds': 'INBOX',
+        'maxResults': 10,
+        'q': document.getElementById("search-field").value
+      });
+
+      request.execute(function (response) {
+
+        document.getElementById("searchResultsDiv").innerHTML = "";
+
+        for (let i = 0; i < response.messages.length; i++) {
+          var messageRequest = gapi.client.gmail.users.messages.get({
+            'userId': 'me',
+            'id': response.messages[i].id
+          });
+
+          messageRequest.execute(appendSearchRow);
+        }
+
+      });
+    }
+
+    function appendMessageRow(message) {
+      //console.log("fn:appendMessageRow");
+
+      var inboxContainer = document.getElementById("inboxMessagesDiv");
+
+      var thisRow = document.createElement('div');
+      thisRow.setAttribute("class", "row mt-3");
+
+      var sender = document.createElement("div");
+      sender.setAttribute("class", "col-lg-3");
+      sender.innerHTML = getHeader(message.payload.headers, 'From');
+      thisRow.appendChild(sender);
+
+      var subject = document.createElement("div");
+      subject.setAttribute("class", "col-lg-6");
+      subject.innerHTML = '<a href="#message-modal-' + message.id + '" data-toggle="modal" onclick="" id="message-link-' + message.id + '">' + getHeader(message.payload.headers, 'Subject') + '</a>';
+      thisRow.appendChild(subject);
+
+      var date = document.createElement("div");
+      date.setAttribute("class", "col-lg-3");
+      date.innerHTML = getHeader(message.payload.headers, 'Date');
+      thisRow.appendChild(date);
+
+      inboxContainer.appendChild(thisRow);
+
+      var modalDiv = document.createElement('div');
+      modalDiv.setAttribute("class", "modal fade");
+      modalDiv.id = "message-modal-" + message.id;
+      modalDiv.setAttribute('tabindex', "-1");
+      modalDiv.setAttribute("role", "dialog");
+
+      var reply_to = (getHeader(message.payload.headers, 'Reply-to') !== '' ?
+        getHeader(message.payload.headers, 'Reply-to') :
+        getHeader(message.payload.headers, 'From')).replace(/\"/g, '&quot;');
+
+      var reply_subject = 'Re: ' + getHeader(message.payload.headers, 'Subject').replace(/\"/g, '&quot;');
+
+
+      modalDiv.innerHTML = '<div class="modal-dialog modal-lg">\
+              <div class="modal-content">\
+                <div class="modal-header">\
+                  <h4 class="modal-title" id="myModalLabel">' +
+        getHeader(message.payload.headers, 'Subject') +
+        '       <button type="button"\ class="close"\ style="float:right"\
+                          data-dismiss="modal"\
+                          aria-label="Close">\
+                    <span aria-hidden="true">&times;</span></button></h4>\
+                </div>\
+                <div class="modal-body">\
+                  <iframe id="message-iframe-'+ message.id + '">\
+                  </iframe>\
+                </div>\
+                <div class="modal-footer">\
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+    <button type="button" class="btn btn-primary reply-button" data-dismiss="modal" data-toggle="modal" data-target="#reply-modal"\
+    onclick="fillInReply(\
+      \''+ reply_to + '\', \
+      \''+ reply_subject + '\', \
+      \''+ getHeader(message.payload.headers, 'Message-ID') + '\'\
+      );"\
+    >Reply</button>\
+  </div>\
+              </div>\
+            </div>';
+
+      document.getElementById("mailBody").appendChild(modalDiv);
+
+      document.getElementById('message-link-' + message.id).onclick = function () {
+        if (document.getElementById('message-iframe-' + message.id).contentDocument.rendered !== true) {
+          document.getElementById('message-iframe-' + message.id).contentDocument.write(getBody(message.payload));
+        }
+        document.getElementById('message-iframe-' + message.id).contentDocument.rendered = true;
+      };
+    }
+
+
+
+    function appendSearchRow(message) {
+      //console.log("fn:appendSearchRow");
+
+      var inboxContainer = document.getElementById("searchResultsDiv");
+
+      var thisRow = document.createElement('div');
+      thisRow.setAttribute("class", "row mt-3");
+
+      var sender = document.createElement("div");
+      sender.setAttribute("class", "col-lg-3");
+      sender.innerHTML = getHeader(message.payload.headers, 'From');
+      thisRow.appendChild(sender);
+
+      var subject = document.createElement("div");
+      subject.setAttribute("class", "col-lg-6");
+      subject.innerHTML = '<a href="#search-modal-' + message.id + '" data-toggle="modal" onclick="" id="search-link-' + message.id + '">' + getHeader(message.payload.headers, 'Subject') + '</a>';
+      thisRow.appendChild(subject);
+
+      var date = document.createElement("div");
+      date.setAttribute("class", "col-lg-3");
+      date.innerHTML = getHeader(message.payload.headers, 'Date');
+      thisRow.appendChild(date);
+
+      inboxContainer.appendChild(thisRow);
+
+      var modalDiv = document.createElement('div');
+      modalDiv.setAttribute("class", "modal fade");
+      modalDiv.id = "search-modal-" + message.id;
+      modalDiv.setAttribute('tabindex', "-1");
+      modalDiv.setAttribute("role", "dialog");
+
+      var reply_to = (getHeader(message.payload.headers, 'Reply-to') !== '' ?
+        getHeader(message.payload.headers, 'Reply-to') :
+        getHeader(message.payload.headers, 'From')).replace(/\"/g, '&quot;');
+
+      var reply_subject = 'Re: ' + getHeader(message.payload.headers, 'Subject').replace(/\"/g, '&quot;');
+
+
+      modalDiv.innerHTML = '<div class="modal-dialog modal-lg">\
+              <div class="modal-content">\
+                <div class="modal-header">\
+                  <h4 class="modal-title" id="myModalLabel">' +
+        getHeader(message.payload.headers, 'Subject') +
+        '       <button type="button"\ class="close"\ style="float:right"\
+                          data-dismiss="modal"\
+                          aria-label="Close">\
+                    <span aria-hidden="true">&times;</span></button></h4>\
+                </div>\
+                <div class="modal-body">\
+                  <iframe id="search-iframe-'+ message.id + '">\
+                  </iframe>\
+                </div>\
+                <div class="modal-footer">\
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+    <button type="button" class="btn btn-primary reply-button" data-dismiss="modal" data-toggle="modal" data-target="#reply-modal"\
+    onclick="fillInReply(\
+      \''+ reply_to + '\', \
+      \''+ reply_subject + '\', \
+      \''+ getHeader(message.payload.headers, 'Message-ID') + '\'\
+      );"\
+    >Reply</button>\
+  </div>\
+              </div>\
+            </div>';
+
+      document.getElementById("mailBody").appendChild(modalDiv);
+
+      document.getElementById('search-link-' + message.id).onclick = function () {
+        document.getElementById('search-iframe-' + message.id).contentDocument.write(getBody(message.payload));
+      };
+    }
+
+    var replyMessageID = 0;
+
+    function fillInReply(to, subject, message_id) {
+      document.getElementById("compose-to").value = to;
+      document.getElementById("compose-subject").value = subject;
+      replyMessageID = message_id;
+      document.getElementById("compose-to").disabled = true;
+      document.getElementById("compose-subject").disabled = true;
+      showCompose();
+    }
+
+
+
+
+    function getHeader(headers, index) {
+      var header = '';
+
+      for (let i = 0; i < headers.length; i++) {
+        if (headers[i]['name'] === index) {
+          header = headers[i]['value'];
+          break;
+        }
+      }
+
+      return header;
+    }
+
+    function getBody(message) {
+      var encodedBody = '';
+      if (typeof message.parts === 'undefined') {
+        encodedBody = message.body.data;
+      }
+      else {
+        encodedBody = getHTMLPart(message.parts);
+      }
+      encodedBody = encodedBody.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+      return decodeURIComponent(escape(window.atob(encodedBody)));
+    }
+
+    function getHTMLPart(arr) {
+      for (var x = 0; x <= arr.length; x++) {
+        if (typeof arr[x].parts === 'undefined') {
+          if (arr[x].mimeType === 'text/html') {
+            return arr[x].body.data;
+          }
+        }
+        else {
+          return getHTMLPart(arr[x].parts);
+        }
+      }
+      return '';
+    }
+  </script>
+  <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+</body>
+
+</html>
