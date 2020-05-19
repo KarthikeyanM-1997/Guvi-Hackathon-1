@@ -71,7 +71,7 @@
       <br>
     </div>
 
-    <div class='row'>
+    <div class='row p-3'>
       <div class='col-lg-3'>
         Sender
       </div>
@@ -107,7 +107,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" onclick='clearReply();' data-dismiss="modal">Clear</button>
+        <button type="button" class="btn btn-default" onclick='composeTidy();' data-dismiss="modal">Clear</button>
         <button type="submit" id="send-button" class="btn btn-primary">Send</button>
       </div>
     </form>
@@ -148,6 +148,7 @@
     function sendEmail() {
       document.getElementById("send-button").setAttribute("class", "btn btn-primary disabled");
       var textEditor = CKEDITOR.instances["compose-message"];
+      //console.log(replyMessageID);
       if (replyMessageID !== 0) {
         sendMessage(
           {
@@ -225,13 +226,13 @@
     }
 
     function handleClientLoad() {
-      console.log("fn:handleClientLoad");
+      //console.log("fn:handleClientLoad");
       gapi.client.setApiKey(apiKey);
       window.setTimeout(checkAuth, 1);
     }
 
     function checkAuth() {
-      console.log("fn:checkAuth");
+      //console.log("fn:checkAuth");
       gapi.auth.authorize({
         client_id: clientId,
         scope: scopes,
@@ -240,7 +241,7 @@
     }
 
     function handleAuthClick() {
-      console.log("fn:handleAuthClick");
+      //console.log("fn:handleAuthClick");
       gapi.auth.authorize({
         client_id: clientId,
         scope: scopes,
@@ -250,7 +251,7 @@
     }
 
     function handleAuthResult(authResult) {
-      console.log("fn:handleAuthResult");
+      //console.log("fn:handleAuthResult");
 
       if (authResult && !authResult.error) {
         loadGmailApi();
@@ -261,22 +262,23 @@
         document.getElementById("authorize-button").setAttribute("class", "btn btn-primary hidden");
         document.getElementById("authorize-button").setAttribute("style", "display:none");
       } else {
-        console.log(authResult);
+        //console.log(authResult);
         document.getElementById("authorize-button").setAttribute("class", "btn btn-primary");
       }
     }
 
     function loadGmailApi() {
-      console.log("fn:loadGmailApi");
+      //console.log("fn:loadGmailApi");
       gapi.client.load('gmail', 'v1', displayInbox);
     }
 
     function refreshInbox() {
       displayInbox();
     }
-
+    var inboxRow = 1;
     function displayInbox() {
-      console.log("fn:displayInbox");
+      //console.log("fn:displayInbox");
+      inboxRow = 1;
       var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -297,8 +299,10 @@
       });
     }
 
+    var searchRow = 1;
     function displaySearch() {
-      console.log("fn:displaySearch");
+      //console.log("fn:displaySearch");
+      searchRow = 1;
       var request = gapi.client.gmail.users.messages.list({
         'userId': 'me',
         'labelIds': 'INBOX',
@@ -328,7 +332,12 @@
       var inboxContainer = document.getElementById("inboxMessagesDiv");
 
       var thisRow = document.createElement('div');
-      thisRow.setAttribute("class", "row mt-3");
+      thisRow.setAttribute("class", "row p-3");
+      
+      if(inboxRow %  2 === 1){
+        thisRow.setAttribute("style", "background:#e6e6e6");
+      }
+      inboxRow++;
 
       var sender = document.createElement("div");
       sender.setAttribute("class", "col-lg-3");
@@ -405,7 +414,12 @@
       var inboxContainer = document.getElementById("searchResultsDiv");
 
       var thisRow = document.createElement('div');
-      thisRow.setAttribute("class", "row mt-3");
+      thisRow.setAttribute("class", "row p-3");
+
+      if(searchRow %  2 === 1){
+        thisRow.setAttribute("style", "background:#e6e6e6");
+      }
+      searchRow++;
 
       var sender = document.createElement("div");
       sender.setAttribute("class", "col-lg-3");
