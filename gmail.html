@@ -16,6 +16,7 @@
       display: flex;
     }
   </style>
+  <script src="https://cdn.ckeditor.com/4.14.0/standard-all/ckeditor.js"></script>
 </head>
 
 <body id='mailBody'>
@@ -146,14 +147,16 @@
 
     function sendEmail() {
       document.getElementById("send-button").setAttribute("class", "btn btn-primary disabled");
+      var textEditor = CKEDITOR.instances["compose-message"];
       if (replyMessageID !== 0) {
         sendMessage(
           {
             'To': document.getElementById("compose-to").value,
             'Subject': document.getElementById("compose-subject").value,
+            'Content-Type' : 'text/html',
             'In-Reply-To': replyMessageID
           },
-          document.getElementById("compose-message").value,
+          textEditor.getData(),
           composeTidy
         );
         replyMessageID = 0;
@@ -162,9 +165,10 @@
         sendMessage(
           {
             'To': document.getElementById("compose-to").value,
+            'Content-Type' : 'text/html',
             'Subject': document.getElementById("compose-subject").value
           },
-          document.getElementById("compose-message").value,
+          textEditor.getData(),
           composeTidy
         );
       }
@@ -174,9 +178,13 @@
 
 
     function composeTidy() {
+      var textEditor = CKEDITOR.instances["compose-message"];
+      textEditor.setData("");
+
       document.getElementById("compose-to").value = "";
       document.getElementById("compose-subject").value = "";
-      document.getElementById("compose-message").value = "";
+      //document.getElementById("compose-message").value = "";
+      
       replyMessageID = 0;
       document.getElementById("send-button").setAttribute("class", "btn btn-primary");
       document.getElementById("compose-subject").value = "";
@@ -185,9 +193,12 @@
     }
 
     function clearReply() {
+      var textEditor = CKEDITOR.instances["compose-message"];
+      textEditor.setData("");
+      
       document.getElementById("compose-to").value = "";
       document.getElementById("compose-subject").value = "";
-      document.getElementById("compose-message").value = "";
+      //document.getElementById("compose-message").value = "";
       replyMessageID = 0;
       document.getElementById("send-button").setAttribute("class", "btn btn-primary");
       document.getElementById("compose-subject").value = "";
@@ -512,8 +523,13 @@
       }
       return '';
     }
+    
+    CKEDITOR.replace('compose-message', {
+      height: 250
+    });
   </script>
   <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+
 </body>
 
 </html>
